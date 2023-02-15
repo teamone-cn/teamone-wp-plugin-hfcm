@@ -90,8 +90,6 @@ Note: The configuration file configuration data is read by default.
 
 ```
 Add the following configuration to the wp-config.php file:
-
-```
 //team-one-hfcm redis configuration
 
 define('HFCM_REDIS_CLIENT', 'pecl'); # Specify the client used to communicate with Redis, pecl is The PHP Extension Community Library
@@ -110,5 +108,4 @@ define('HFCM_CACHE_KEY_SALT', 'wp_'); # Set the prefix of all cache keys (used i
 define('HFCM_REDIS_MAXTTL', '86400');
 
 define('HFCM_LOG', true);//team-one-hfcm Whether to open the log
-```
 ```
