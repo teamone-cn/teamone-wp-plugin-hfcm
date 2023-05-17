@@ -3,7 +3,7 @@
  * Plugin Name: Team One Header Footer Code Manager
  * Plugin URI: 
  * Description: Header Footer Code Manager by Team One is a quick and simple way for you to add tracking code snippets, conversion pixels, or other scripts required by third party services for analytics, tracking, marketing, or chat functions. For detailed documentation, please visit the plugin's <a href="https://www.teamonetech.cn/"> official page</a>.
- * Version: 1.0.0
+ * Version: 1.0.4
  * Requires at least: 4.9
  * Requires PHP: 5.6.20
  * Author: Team-one
@@ -60,7 +60,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
 
     class Team_One_NNR_HFCM
     {
-        public static $nnr_hfcm_db_version = "1.5";
+        public static $nnr_hfcm_db_version = "1.6";
         public static $nnr_hfcm_table = "team_one_hfcm_scripts";
         public static $timeout = 60*60*24*7;//redis过期时间设置为一周
 
@@ -73,6 +73,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
             self::hfcm_plugin_notice_dismissed();
             self::team_one_hfcm_import_snippets();
             self::team_one_hfcm_export_snippets();
+            
         }
 
         /*
@@ -109,6 +110,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                     `last_modified_by` varchar(300) DEFAULT NULL,
                     `created` datetime DEFAULT NULL,
                     `last_revision_date` datetime DEFAULT NULL,
+                    `snippet_desc` LONGTEXT NULL,
                     PRIMARY KEY (`script_id`)
                 )	$charset_collate";
 
@@ -174,9 +176,25 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                         $wpdb->query( $nnr_alter_sql );
                     }
 
+
+                     // Check for Snippet desc
+                     $nnr_column_snippet_desc       = 'snippet_desc';
+                     $nnr_check_column_snippet_desc = $wpdb->get_results(
+                         $wpdb->prepare(
+                             "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s AND COLUMN_NAME = %s ",
+                             $wpdb->dbname,
+                             $table_name,
+                             $nnr_column_snippet_desc
+                         )
+                     );
+                     if ( empty( $nnr_check_column_snippet_desc ) ) {
+                         $nnr_alter_sql = "ALTER TABLE `{$table_name}` ADD `snippet_desc` LONGTEXT NULL";
+                         $wpdb->query( $nnr_alter_sql );
+                     }
+                
                     $nnr_alter_sql = "ALTER TABLE `{$table_name}` CHANGE `snippet` `snippet` LONGTEXT NULL";
                     $wpdb->query( $nnr_alter_sql );
-
+                 
                     $nnr_alter_sql = "ALTER TABLE `{$table_name}` CHANGE `display_on` `display_on` ENUM('All','s_pages','s_posts','s_categories','s_custom_posts','s_tags','s_is_home','s_is_archive','s_is_search','latest_posts','manual') DEFAULT 'All' NOT NULL";
                     $wpdb->query( $nnr_alter_sql );
 
@@ -388,7 +406,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 'admin_page_team-one-hfcm-update',
             );
 
-            $screen                = get_current_screen()->id;
+            $screen  = get_current_screen()->id;
 
             if ( in_array( $screen, $allowed_pages_notices ) ) {
                 ?>
@@ -834,6 +852,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
             $s_custom_posts   = array();
             $s_categories     = array();
             $s_tags           = array();
+            $snippet_desc     = '';
 
             // Notify hfcm-add-edit.php NOT to make changes for update
             $update = false;
@@ -921,6 +940,8 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 $s_custom_posts   = self::hfcm_sanitize_array( 's_custom_posts', 'string' );
                 $s_categories     = self::hfcm_sanitize_array( 's_categories' );
                 $s_tags           = self::hfcm_sanitize_array( 's_tags' );
+                $snippet_desc     = self::hfcm_sanitize_text( 'snippet_desc', false );
+
 
                 if ( 'manual' === $display_on ) {
                     $location = '';
@@ -964,11 +985,13 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                             's_tags'             => wp_json_encode( $s_tags ),
                             'last_revision_date' => current_time( 'Y-m-d H:i:s' ),
                             'last_modified_by'   => sanitize_text_field( $current_user->display_name ),
+                            'snippet_desc'       => $snippet_desc,
                         ),
                         // Where
                         array( 'script_id' => $id ),
                         // Data format
                         array(
+                            '%s',
                             '%s',
                             '%s',
                             '%s',
@@ -1011,6 +1034,8 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                             's_tags'         => wp_json_encode( $s_tags ),
                             'created'        => current_time( 'Y-m-d H:i:s' ),
                             'created_by'     => sanitize_text_field( $current_user->display_name ),
+                            'snippet_desc'       => $snippet_desc,
+
                         ), array(
                             '%s',
                             '%s',
@@ -1020,6 +1045,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                             '%s',
                             '%s',
                             '%d',
+                            '%s',
                             '%s',
                             '%s',
                             '%s',
@@ -1172,6 +1198,8 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 $display_on       = $s->display_on;
                 $status           = $s->status;
                 $lp_count         = $s->lp_count;
+                $snippet_desc     = $s->snippet_desc;
+
                 if ( empty( $lp_count ) ) {
                     $lp_count = 5;
                 }
@@ -1228,6 +1256,8 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
             $status           = esc_html( $status );
             $lp_count         = esc_html( $lp_count );
             $i                = esc_html( $lp_count );
+            $snippet_desc     = esc_textarea( $snippet_desc );
+
             // Notify hfcm-add-edit.php to make necesary changes for update
             $update = true;
 
@@ -1431,14 +1461,14 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                         "name", "snippet", "snippet_type", "device_type", "location",
                         "display_on", "lp_count", "s_pages", "ex_pages", "s_posts",
                         "ex_posts", "s_custom_posts", "s_categories", "s_tags", "status",
-                        "created_by", "last_modified_by", "created", "last_revision_date"
+                        "created_by", "last_modified_by", "created", "last_revision_date","snippet_desc"
                     );
                     foreach ( $nnr_hfcm_snippet as $nnr_key => $nnr_item ) {
                         $nnr_key = sanitize_text_field( $nnr_key );
                         if ( in_array( $nnr_key, $nnr_hfcm_keys ) ) {
                             if ( $nnr_key == "lp_count" ) {
                                 $nnr_item = absint( $nnr_item );
-                            } elseif ( $nnr_key != "snippet" ) {
+                            } elseif ( $nnr_key != "snippet" && $nnr_key != "snippet_desc") {
                                 $nnr_item = sanitize_text_field( $nnr_item );
                             }
                             $nnr_hfcm_sanitizes_snippet[ $nnr_key ] = $nnr_item;
@@ -1455,6 +1485,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                             '%s',
                             '%s',
                             '%d',
+                            '%s',
                             '%s',
                             '%s',
                             '%s',
@@ -1550,9 +1581,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
 
         /**
          * Teamone
-         * 2023年1月9日 新增redis设置
-         * 2023年1月10日 新增日志开关
-         * 
+         * redis and log switch
         */
         public static function hfcm_redis_set(){
 
@@ -1570,7 +1599,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 return false;
             }
             
-            $host = $_POST['host'] ? $_POST['host'] : '127.0.0,1';
+            $host = $_POST['host'];
 
             $port = $_POST['port'] ? $_POST['port'] : '6379';
 
@@ -1580,26 +1609,98 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
 
             $log_set = $_POST['debug_log'] ? 1 : 0;
             
-            update_option('hfcm_redis_host', $host);
-            update_option('hfcm_redis_port', $port);
-            update_option('hfcm_redis_password', $password);
-            update_option('hfcm_redis_cache_key_salt', $cache_key_salt);
-            update_option('hfcm_debug_log', $log_set);
-
-            //测试连接 Redis 服务
-            try{
-                $redis = new Redis();
-                $redis->connect(get_option('hfcm_redis_host'),get_option('hfcm_redis_port'));
-                $redis->auth(get_option('hfcm_redis_password'));
-            }catch(Exception $e){
-                ?>
-                <script>
-                    alert('redis连接失败');
-                </script>
-                <?php
-            }
-            self::hfcm_redirect( admin_url( 'admin.php?page=team-one-hfcm-redis-set'));
             
+
+            if(empty($host)){
+                
+                self::hfcm_check_setting_push_notice(0);
+                
+            }else{
+                update_option('hfcm_redis_host', $host);
+                update_option('hfcm_redis_port', $port);
+                update_option('hfcm_redis_password', $password);
+                update_option('hfcm_redis_cache_key_salt', $cache_key_salt);
+                
+                //test connection Redis server
+                try{
+                    $redis = new Redis();
+                    $redis->connect(get_option('hfcm_redis_host'),get_option('hfcm_redis_port'));
+
+                    if(get_option('hfcm_redis_password')){
+                        $redis->auth(get_option('hfcm_redis_password'));
+                    }
+
+                    self::hfcm_check_setting_push_notice(1);
+                }catch(Exception $exception){
+
+                    $log = new Teamone_Hfcm_Cache_File();
+                    $log->flie_log($exception,'redis');
+                    
+                    self::hfcm_check_setting_push_notice(0);
+                    
+                }
+            }
+            if($log_set != get_option('hfcm_debug_log')){
+                $update_res =  update_option('hfcm_debug_log', $log_set);
+                if($update_res){
+                    self::hfcm_check_setting_push_notice(1,'log');
+                }else{
+                    self::hfcm_check_setting_push_notice(0,'log');
+                }
+            }
+            
+            $back_bt = '<a href="'.admin_url( 'admin.php?page=team-one-hfcm-redis-set').'" class="button button-primary button-large nnr-btnsave">Back To The Set Interface</a>';
+            echo $back_bt;
+            // self::hfcm_redirect( admin_url( 'admin.php?page=team-one-hfcm-redis-set'));
+        }
+
+        
+        //setting message alert
+        public static function hfcm_check_setting_push_notice($status_code=0,$type='redis'){
+            
+            switch($type){
+                case 'redis':
+
+                    $msg = "Redis Connection setting";
+                    
+                    break;
+
+                case 'log':
+
+                    $msg = "Error Log Setting";
+                    break;
+            }
+
+            switch($status_code){
+                case 0:
+
+                    $msg .= " Fail set";
+                    $notic =  '
+                    <div id="hfcm-message" class="notice hfcm-warning-notice notice-warning">
+                        <p>
+                            '.$msg.'
+                        </p>
+                    </div>
+                    ';
+
+                    break;
+
+                case 1:
+
+                    $msg .= " Successfully set";
+                    $notic =  '
+                        <div id="hfcm-message" class="notice notice-success is-dismissible">
+                            <p>
+                            '.$msg.'
+                            </p>
+                        </div>
+                    ';
+                    break;
+
+                default:
+                    $msg .= " Not set";
+            }
+            echo $notic;
         }
         
     }

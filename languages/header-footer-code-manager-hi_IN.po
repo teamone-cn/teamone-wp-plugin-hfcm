@@ -649,3 +649,8 @@ msgstr ""
 
 #~ msgid "Script deleted"
 #~ msgstr "आलेख नष्ट कर दिया"
+
+
+#~ msgid "Snippet Desc"
+#~ msgstr "备注"
+

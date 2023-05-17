@@ -400,6 +400,13 @@ wp_enqueue_script( 'team-one_hfcm_showboxes' );
                         </td>
                     </tr>
                 <?php endif; ?>
+                <tr>
+                    <th class="hfcm-th-width"><?php esc_html_e( 'Snippet Desc', 'header-footer-code-manager' ); ?></th>
+                    <td class="nnr-mt-20 ">
+                        <textarea  name="data[snippet_desc]"  class="hfcm-field-width " id="nnr_snippet_desc" rows="20"><?php echo html_entity_decode( $snippet_desc ); ?>
+                        </textarea>
+                    </td>
+                </tr>
             </table>
             <div class="nnr-mt-20">
                 <h1><?php esc_html_e( 'Snippet', 'header-footer-code-manager' ); ?>

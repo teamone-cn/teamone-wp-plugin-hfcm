@@ -1,7 +1,7 @@
 <?php
 /**
  * Author: Teamone
- * Date: 2023/1/9
+ * Date: 2023/3/13
  * Action: Cache JSON files and generate log files
  */
 
@@ -12,7 +12,30 @@ class Teamone_Hfcm_Cache_File{
 
     
     function __construct(){
+        self::check_file_permissions();
+    }
 
+    public static function check_file_permissions(){
+        //检测cache目录权限
+        if(!file_exists(plugin_dir_path(__DIR__).'cache')){
+            mkdir(plugin_dir_path(__DIR__).'cache',0755,true);
+        }else{
+            @chmod(plugin_dir_path(__DIR__).'cache', 0755);
+        }
+
+        //检测站点缓存目录权限
+        if(!file_exists(Cache_File_Path)){
+            mkdir(Cache_File_Path,0755,true);
+        }else{
+            @chmod(Cache_File_Path,0755);
+        }
+
+        //检测日志文件目录权限
+        if(!file_exists(Logo_File_Path)){
+            mkdir(Logo_File_Path,0755,true);
+        }else{
+            @chmod(Logo_File_Path, 0755);
+        }
     }
 
     //创建缓存json文件写入内容
@@ -20,22 +43,15 @@ class Teamone_Hfcm_Cache_File{
         
         if(!empty($json)){
             if(file_exists(Cache_File_Path.$rekey.'.json')){
+                @chmod(Cache_File_Path.$rekey.'.json', 0755);
                 self::get_json($rekey);
             }else{
                 try{
-
-                    if(!file_exists(Cache_File_Path)){
-                        mkdir(Cache_File_Path);
-                    }
-                    
-
                     $cahe_file = fopen(Cache_File_Path.$rekey.'.json','w');
-                    
-                    $fwrite_res = fwrite($cahe_file, $json);
-                    
                     @chmod(Cache_File_Path.$rekey.'.json', 0755);
-        
-                    fclose($cahe_file);
+                    @fwrite($cahe_file, $json);
+                    @fclose($cahe_file);
+
                     }catch (Exception $exception){
                         self::flie_log($rekey.'.json'.'创建写入失败'.$exception);
                         self::return_msg(0,'写入失败');
@@ -58,15 +74,13 @@ class Teamone_Hfcm_Cache_File{
                 $res = $cache_json;
                 
                 // self::flie_log($rekey.'.json'.'获取数据成功');
-                return  $cache_json;
+                return  $res;
                 // self::return_msg(1,'获取数据成功',$cache_json);
             }
         }catch(Exception $exception){
             self::flie_log($rekey.'.json'.'获取数据错误:'.$exception);
             self::return_msg(0,'文件不存在');
         }
-
-        
     }
 
     //删除缓存json文件
@@ -85,8 +99,7 @@ class Teamone_Hfcm_Cache_File{
             }  
         }catch(Exception $exception){
             self::flie_log($status.'删除缓存文件失败'.$exception);
-        }
-              
+        }  
     }
 
     //统一返回数据结构
@@ -107,14 +120,19 @@ class Teamone_Hfcm_Cache_File{
         $log_set = defined('HFCM_LOG') ? HFCM_LOG : get_option('hfcm_debug_log');
 
         if($log_set){
-
             $msg_type = $msg_type == 'cache' ? 'cache':'redis';
 
             $log_msg = date('Y-m-d H:i:s',current_time('timestamp')).' -- '.$log_msg.PHP_EOL;
 
             $log_file = Logo_File_Path.$msg_type.'.log';
-
-            error_log($log_msg,3,$log_file);
+            
+            if(file_exists($log_file)){
+                error_log($log_msg,3,$log_file);
+            }else{
+                $file = fopen($log_file,'w');
+                @chmod($log_file, 0777);
+                error_log($log_msg,3,$log_file);
+            }
         }
     }
 

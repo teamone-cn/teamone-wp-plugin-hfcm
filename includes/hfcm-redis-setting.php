@@ -5,7 +5,11 @@
 <div class="wrap">
     <h1>Team One HFCM 设置</h1>
     <span>在无法修改配置文件时可设置使用</span>
-        <?php $hfcm_form_action = admin_url( 'admin.php?page=team-one-hfcm-set-request' );?>
+        <?php 
+            $hfcm_form_action = admin_url( 'admin.php?page=team-one-hfcm-set-request' );
+
+            
+        ?>
             <form method="post" action="<?php echo $hfcm_form_action ?>">
                 <table class="form-table">
                     <tbody>
@@ -31,7 +35,7 @@
                                 Redis 密码 PassWord:
                             </th>
                             <td>
-                                <input type="text" name="password" value="<?php echo esc_attr( get_option('hfcm_redis_password') ); ?>"
+                                <input type="password" name="password" value="<?php echo esc_attr( get_option('hfcm_redis_password') ); ?>"
                                     class="regular-text"/>
                             </td>
                         </tr>

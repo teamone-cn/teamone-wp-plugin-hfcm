@@ -20,22 +20,24 @@ class Teamone_Hfcm_Redis
     	//连接本地redis
         $host = defined('HFCM_REDIS_HOST') ? HFCM_REDIS_HOST :  get_option('hfcm_redis_host');
         $port = defined('HFCM_REDIS_PORT') ? HFCM_REDIS_PORT :  get_option('hfcm_redis_port');
+
         
-
-        $this->conn = new Redis();
-        $file_cache = new Teamone_Hfcm_Cache_File();
-        try{
-            $this->conn -> connect($host,$port);
-
-            $password = defined('HFCM_REDIS_PASSWORD') ? HFCM_REDIS_PASSWORD :  get_option('hfcm_redis_password');
-            
-            $this->conn->auth($password);
-            $this->open_redis = true;
-        }catch(Exception $e){
-            $file_cache::flie_log('Redis:Error_Link:'.$e->getMessage(),'redis');
+        if($host && $port){
+            $this->conn = new Redis();
+            $file_cache = new Teamone_Hfcm_Cache_File();
+            try{
+                $this->conn -> connect($host,$port);
+    
+                $password = defined('HFCM_REDIS_PASSWORD') ? HFCM_REDIS_PASSWORD :  get_option('hfcm_redis_password');
+                
+                if($password){
+                    $this->conn->auth($password);
+                }
+                $this->open_redis = true;
+            }catch(Exception $e){
+                $file_cache::flie_log('Redis:Error_Link:'.$e->getMessage(),'redis');
+            }
         }
-        
-        
     }
 	//私有克隆方式
     private function __clone()

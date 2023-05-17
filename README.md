@@ -90,7 +90,6 @@ TeamOneHFCM 的页眉页脚代码管理器可在WordPress 框架中将代码片�
 
 ```
 在wp-config.php文件中增加如下配置：
-
 //team-one-hfcm redis 配置
 
 define('HFCM_REDIS_CLIENT', 'pecl'); # 指定用于与Redis通信的客户端, pecl 即 The PHP Extension Community Library
