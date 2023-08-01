@@ -7,15 +7,13 @@
 
 
 define('Logo_File_Path',plugin_dir_path(__DIR__).'log/');
-
 class Teamone_Hfcm_Cache_File{
-
+    public static $hfcm_settable = "team_one_hfcm_scripts_set";
     
     function __construct(){
-        // 实例化redis
-        $redis = new Teamone_Hfcm_Redis();
+
         // 获取后台配置的域名缓存key
-        $hfcm_set_data =$redis::get_hfcm_set();
+        $hfcm_set_data =self::get_hfcm_set();
         $server_name_key = !empty($hfcm_set_data)&& !empty($hfcm_set_data['hfcm_domain_key'])?$hfcm_set_data['hfcm_domain_key']:$_SERVER['SERVER_NAME'];
         define('Cache_File_Path',plugin_dir_path(__DIR__).'cache/'.$server_name_key.'/');
         self::check_file_permissions();
@@ -142,6 +140,16 @@ class Teamone_Hfcm_Cache_File{
         }
     }
 
-    
+   /*
+    */
+    public static function get_hfcm_set(){
+
+        global $wpdb;
+        $table_name      = $wpdb->prefix . self::$hfcm_settable;
+        $nnr_set_data = $wpdb->get_row(
+            "SELECT * FROM `{$table_name}`"
+        ,'ARRAY_A');
+        return $nnr_set_data;
+    }    
 }
 
