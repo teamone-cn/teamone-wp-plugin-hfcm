@@ -644,10 +644,12 @@ class Teamone_Hfcm_Snippets_List extends WP_List_Table
 
         // 实例化redis
         $redis = new Teamone_Hfcm_Redis();
-
+        // 获取后台配置的域名缓存key
+        $hfcm_set_data =$redis::get_hfcm_set();
+        $server_name_key = !empty($hfcm_set_data)&& !empty($hfcm_set_data['hfcm_domain_key'])?$hfcm_set_data['hfcm_domain_key']:$_SERVER['SERVER_NAME'];
         if($redis->open_redis){
             // 获取redis中存储的数据
-            $redis_cache = $redis->del_redis('hfcm:'.$_SERVER['SERVER_NAME'].':'.$wpdb->prefix.':'.$rediskey);
+            $redis_cache = $redis->del_redis('hfcm:'.$server_name_key.':'.$wpdb->prefix.':'.$rediskey);
 
         }else{
             $file_cache = new Teamone_Hfcm_Cache_File();

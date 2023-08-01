@@ -475,10 +475,12 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 $redis = new Teamone_Hfcm_Redis();
 
                 $file_cache = new Teamone_Hfcm_Cache_File();
-
+                // 获取后台配置的域名缓存key
+                $hfcm_set_data = $redis::get_hfcm_set();
+                $server_name_key = !empty($hfcm_set_data)&& !empty($hfcm_set_data['hfcm_domain_key'])?$hfcm_set_data['hfcm_domain_key']:$_SERVER['SERVER_NAME'];
                 if($redis->open_redis){
                     // 获取redis中存储的数据
-                    $cache = $redis->get_redis('hfcm:'.$_SERVER['SERVER_NAME'].':'.$wpdb->prefix.':'.$rediskey,self::$timeout);
+                    $cache = $redis->get_redis('hfcm:'.$server_name_key.':'.$wpdb->prefix.':'.$rediskey,self::$timeout);
 
                 }else{
 
@@ -502,7 +504,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                         $json_data = json_encode($script_all,true);
 
                         if(!empty($script_all)){
-                            $redis->open_redis ? $redis->set_redis('hfcm:'.$_SERVER['SERVER_NAME'].':'.$wpdb->prefix.':'.$rediskey,$json_data,self::$timeout):$file_cache->set_json($rediskey,$json_data);
+                            $redis->open_redis ? $redis->set_redis('hfcm:'.$server_name_key.':'.$wpdb->prefix.':'.$rediskey,$json_data,self::$timeout):$file_cache->set_json($rediskey,$json_data);
                         }
                 }
                 
@@ -575,11 +577,13 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
             $redis = new Teamone_Hfcm_Redis();
 
             $file_cache = new Teamone_Hfcm_Cache_File();
-
+            // 获取后台配置的域名缓存key
+            $hfcm_set_data =$redis::get_hfcm_set();
+            $server_name_key = !empty($hfcm_set_data)&& !empty($hfcm_set_data['hfcm_domain_key'])?$hfcm_set_data['hfcm_domain_key']:$_SERVER['SERVER_NAME'];
             if($redis->open_redis){
                 // 获取redis中存储的数据
                 
-                $cache = $redis->get_redis('hfcm:'.$_SERVER['SERVER_NAME'].':'.$wpdb->prefix.':'.$rediskey,self::$timeout);
+                $cache = $redis->get_redis('hfcm:'.$server_name_key.':'.$wpdb->prefix.':'.$rediskey,self::$timeout);
                 // var_dump($cache);exit;
             }else{
                 //获取文件中存储的数据
@@ -601,7 +605,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                     $json_data = json_encode($script,true);
                     // $data = $redis->open_redis ? $redis->set_redis('hfcm:'.DB_NAME.':'.$wpdb->prefix.':'.$rediskey,$json_data): $file_cache->set_json($rediskey,$json_data);
                     if(!empty($script)){
-                        $redis->open_redis ? $redis->set_redis('hfcm:'.$_SERVER['SERVER_NAME'].':'.$wpdb->prefix.':'.$rediskey,$json_data,self::$timeout): $file_cache->set_json($rediskey,$json_data);
+                        $redis->open_redis ? $redis->set_redis('hfcm:'.$server_name_key.':'.$wpdb->prefix.':'.$rediskey,$json_data,self::$timeout): $file_cache->set_json($rediskey,$json_data);
                     }
                 }
                 
@@ -1627,10 +1631,10 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
             $cache_key_salt = $_POST['cache_key_salt'] ? $_POST['cache_key_salt'] : 'wp_';
 
             $log_set = $_POST['debug_log'] ? 1 : 0;
-            
+            $id = absint( $_POST['id'] );
             $redis_domain_key = $_POST['redis_domain_key'];
-
-            if ( isset( $id ) ) {
+            // var_dump($id);exit;
+            if ( isset( $id )  && !empty($id)) {
                 $wpdb->update(
                     $table_name, //table
                     // Data
@@ -1654,7 +1658,9 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                     $table_name, //table
                     array(
                         'hfcm_domain_key'=> $redis_domain_key,
+                        'createtime'     => current_time('timestamp'),
                     ), array(
+                        '%s',
                         '%s',
                     )
                 );
@@ -1800,7 +1806,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 update_option( self::TEAMONEHFCMVERSION, '1.0' );
             };
         }
-        
-    }
+
+    }   
 
 endif;

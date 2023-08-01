@@ -13,6 +13,7 @@ class Teamone_Hfcm_Redis
     private $conn;
     //判断是否redis开启成功
     public $open_redis = false;
+    public static $hfcm_settable = "team_one_hfcm_scripts_set";
 
     //私有构造函数
     function __construct()
@@ -125,4 +126,15 @@ class Teamone_Hfcm_Redis
         return $res;
     }
 
+    /*
+    */
+    public static function get_hfcm_set(){
+
+        global $wpdb;
+        $table_name      = $wpdb->prefix . self::$hfcm_settable;
+        $nnr_set_data = $wpdb->get_row(
+            "SELECT * FROM `{$table_name}`"
+        ,'ARRAY_A');
+        return $nnr_set_data;
+    }
 }
