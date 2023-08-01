@@ -1701,7 +1701,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 }
             }
             
-            $back_bt = '<a href="'.admin_url( 'admin.php?page=team-one-hfcm-redis-set').'&id=' . $id.' class="button button-primary button-large nnr-btnsave">Back To The Set Interface</a>';
+            $back_bt = '<a href="'.admin_url( 'admin.php?page=team-one-hfcm-redis-set').'&id=' . $id.' "class="button button-primary button-large nnr-btnsave">Back To The Set Interface</a>';
             echo $back_bt;
             // self::hfcm_redirect( admin_url( 'admin.php?page=team-one-hfcm-redis-set'));
         }
