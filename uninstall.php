@@ -16,5 +16,6 @@ delete_option('team_one_hfcm_db_version');
 // Drop a custom db table
 global $wpdb;
 $table_name = $wpdb->prefix . 'team_one_hfcm_scripts';
-
+$hfcm_settable = $wpdb->prefix . 'team_one_hfcm_scripts_set';
 $wpdb->query("DROP TABLE IF EXISTS $table_name");
+$wpdb->query("DROP TABLE IF EXISTS $hfcm_settable");

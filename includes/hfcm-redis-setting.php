@@ -11,6 +11,7 @@
             
         ?>
             <form method="post" action="<?php echo $hfcm_form_action ?>">
+            <input type="hidden" name="id" value="<?php echo absint( $id )?>">
                 <table class="form-table">
                     <tbody>
                         <tr>
@@ -36,6 +37,15 @@
                             </th>
                             <td>
                                 <input type="password" name="password" value="<?php echo esc_attr( get_option('hfcm_redis_password') ); ?>"
+                                    class="regular-text"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="hfcm-th-width">
+                                Redis 缓存域名KEY:
+                            </th>
+                            <td>
+                                <input type="text" name="redis_domain_key" value="<?php echo $hfcm_domain_key; ?>"
                                     class="regular-text"/>
                             </td>
                         </tr>

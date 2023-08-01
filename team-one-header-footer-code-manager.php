@@ -62,7 +62,9 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
     {
         public static $nnr_hfcm_db_version = "1.6";
         public static $nnr_hfcm_table = "team_one_hfcm_scripts";
+        public static $hfcm_settable = "team_one_hfcm_scripts_set";
         public static $timeout = 60*60*24*7;//redis过期时间设置为一周
+        const TEAMONEHFCMVERSION = 'th_team_one_hfcm_version';
 
         /*
          * hfcm init function
@@ -73,6 +75,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
             self::hfcm_plugin_notice_dismissed();
             self::team_one_hfcm_import_snippets();
             self::team_one_hfcm_export_snippets();
+            self::update_sql();
             
         }
 
@@ -1585,12 +1588,28 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
         */
         public static function hfcm_redis_set(){
 
+            global $wpdb;
+            $table_name      = $wpdb->prefix . self::$hfcm_settable;
+            $nnr_set_data = $wpdb->get_results(
+                "SELECT * FROM `{$table_name}`"
+            );
+            $id = 0;
+            $hfcm_domain_key = '';
+            if ( $nnr_set_data ) {
+                foreach ( $nnr_set_data as $s ) {
+                    $id             = $s->id;
+                    $hfcm_domain_key    = $s->hfcm_domain_key;
+                }
+                $update = true;
+            }
             include_once plugin_dir_path( __FILE__ ) . 'includes/hfcm-redis-setting.php';
 
         }
 
         public static function hfcm_set_request(){
             
+            global $wpdb;
+            $table_name      = $wpdb->prefix . self::$hfcm_settable;
             // check user capabilities
             $nnr_hfcm_can_edit = current_user_can( 'manage_options' );
 
@@ -1609,7 +1628,38 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
 
             $log_set = $_POST['debug_log'] ? 1 : 0;
             
-            
+            $redis_domain_key = $_POST['redis_domain_key'];
+
+            if ( isset( $id ) ) {
+                $wpdb->update(
+                    $table_name, //table
+                    // Data
+                    array(
+                        'hfcm_domain_key'=> $redis_domain_key,
+                        'updatetime'     => current_time('timestamp'),
+                    ),
+                    // Where
+                    array( 'id' => $id ),
+                    // Data format
+                    array(
+                        '%s',
+                        '%s',
+                    ),
+                    // Where format
+                    array( '%s' )
+                );
+            } else {
+                // Create
+                $wpdb->insert(
+                    $table_name, //table
+                    array(
+                        'hfcm_domain_key'=> $redis_domain_key,
+                    ), array(
+                        '%s',
+                    )
+                );
+                $id = $wpdb->insert_id;
+            }
 
             if(empty($host)){
                 
@@ -1620,6 +1670,8 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 update_option('hfcm_redis_port', $port);
                 update_option('hfcm_redis_password', $password);
                 update_option('hfcm_redis_cache_key_salt', $cache_key_salt);
+                update_option('hfcm_redis_domain_key', $cache_key_salt);
+
                 
                 //test connection Redis server
                 try{
@@ -1649,7 +1701,7 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                 }
             }
             
-            $back_bt = '<a href="'.admin_url( 'admin.php?page=team-one-hfcm-redis-set').'" class="button button-primary button-large nnr-btnsave">Back To The Set Interface</a>';
+            $back_bt = '<a href="'.admin_url( 'admin.php?page=team-one-hfcm-redis-set').'&id=' . $id.' class="button button-primary button-large nnr-btnsave">Back To The Set Interface</a>';
             echo $back_bt;
             // self::hfcm_redirect( admin_url( 'admin.php?page=team-one-hfcm-redis-set'));
         }
@@ -1701,6 +1753,52 @@ if ( !class_exists( 'Team_One_NNR_HFCM' ) ) :
                     $msg .= " Not set";
             }
             echo $notic;
+        }
+
+
+         /**
+         * Update Table.
+         */
+        public static function update_sql(){
+
+            if(get_option(self::TEAMONEHFCMVERSION) == '1.0' ){
+                return;
+            }
+
+            self::update_tables();
+        }
+
+        /**
+         * update_tables
+         */
+        public static function update_tables() {
+            global $wpdb;
+
+            $wpdb->hide_errors();
+
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+            $table_name = self::$hfcm_settable;
+            // Check if the table exists
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table_name'");
+            // If the table doesn't exist, create it
+            if (!$table_exists) {
+                $charset_collate = '';
+                if ( $wpdb->has_cap( 'collation' ) ) {
+                    $charset_collate = $wpdb->get_charset_collate();
+                }
+                $table_name      = $wpdb->prefix . self::$hfcm_settable;
+                //$base_prefix prefix
+                $tables = "CREATE TABLE `{$table_name}` (
+                    `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID',
+                    `hfcm_domain_key` varchar(255) NOT NULL COMMENT '缓存域名',
+                    `createtime` bigint(16) DEFAULT NULL COMMENT '创建时间',
+                    `updatetime` bigint(16) DEFAULT NULL COMMENT '更新时间',
+                    `deletetime` bigint(16) DEFAULT NULL COMMENT '删除时间',
+                    PRIMARY KEY (`id`)
+                ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci COMMENT='重定向插件集合表'";
+                dbDelta( $tables );
+                update_option( self::TEAMONEHFCMVERSION, '1.0' );
+            };
         }
         
     }
