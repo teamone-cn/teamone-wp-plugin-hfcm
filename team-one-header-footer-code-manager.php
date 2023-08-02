@@ -3,7 +3,7 @@
  * Plugin Name: Team One Header Footer Code Manager
  * Plugin URI: 
  * Description: Header Footer Code Manager by Team One is a quick and simple way for you to add tracking code snippets, conversion pixels, or other scripts required by third party services for analytics, tracking, marketing, or chat functions. For detailed documentation, please visit the plugin's <a href="https://www.teamonetech.cn/"> official page</a>.
- * Version: 1.0.4
+ * Version: 1.0.5
  * Requires at least: 4.9
  * Requires PHP: 5.6.20
  * Author: Team-one
