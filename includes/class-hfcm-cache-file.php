@@ -14,7 +14,9 @@ class Teamone_Hfcm_Cache_File{
 
         // 获取后台配置的域名缓存key
         $hfcm_set_data =self::get_hfcm_set();
-        $server_name_key = !empty($hfcm_set_data)&& !empty($hfcm_set_data['hfcm_domain_key'])?$hfcm_set_data['hfcm_domain_key']:$_SERVER['SERVER_NAME'];
+        $server_name = $_SERVER['SERVER_NAME'];
+        $server_domain = preg_replace('/^(.*?)\.(.*?)\.(.*?)$/', '$2.$3', $server_name);
+        $server_name_key = !empty($hfcm_set_data)&& !empty($hfcm_set_data['hfcm_domain_key'])?$hfcm_set_data['hfcm_domain_key']:$server_domain;
         define('Cache_File_Path',plugin_dir_path(__DIR__).'cache/'.$server_name_key.'/');
         self::check_file_permissions();
     }
