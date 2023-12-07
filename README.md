@@ -1,5 +1,9 @@
 ## TeamOneHFCM
 
+霆万平头哥开源
+
+![TeamOne](https://font.thwpmanage.com/img/teamone.jpg) 
+
 TeamOneHFCM 是霆万技术团队基于WordPress 框架开发的插件。
 
 ### 介绍
